@@ -3,81 +3,70 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>البحير نت - الإصدار المطور</title>
+    <title>البحير نت - تسجيل بسيط</title>
     
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-storage-compat.js"></script>
 
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-
     <style>
-        :root { --primary: #1da1f2; --whatsapp: #25D366; --bg: #f0f2f5; }
+        :root { --primary: #1da1f2; --bg: #f0f2f5; }
         body { font-family: 'Segoe UI', sans-serif; background-color: var(--bg); margin: 0; }
         .container { max-width: 500px; margin: auto; padding: 15px; }
         
-        /* البطاقات */
-        .card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        .card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); margin-bottom: 20px; text-align: center; }
         input, select, textarea { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 10px; box-sizing: border-box; }
         
-        .btn { width: 100%; padding: 12px; border: none; border-radius: 10px; cursor: pointer; font-weight: bold; transition: 0.3s; }
-        .btn-main { background: var(--primary); color: white; }
-        .btn-wa { background: var(--whatsapp); color: white; }
-
-        /* الشاشات */
+        .btn { width: 100%; padding: 12px; border: none; border-radius: 10px; cursor: pointer; font-weight: bold; background: var(--primary); color: white; transition: 0.3s; }
+        
         #auth-screen, #profile-setup, #main-app { display: none; }
         
-        .post { background: white; padding: 15px; border-radius: 12px; margin-bottom: 15px; }
-        .user-info { font-size: 12px; color: #65676b; margin-bottom: 10px; }
-        .status-online { color: #2ecc71; font-size: 11px; }
+        .post { background: white; padding: 15px; border-radius: 12px; margin-bottom: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .user-meta { font-size: 12px; color: #65676b; margin-bottom: 10px; border-bottom: 1px solid #eee; padding-bottom: 5px; }
     </style>
 </head>
 <body>
 
 <div class="container">
     <div id="auth-screen" class="card" style="display: block;">
-        <h2>البحير نت</h2>
-        <input type="text" id="username" placeholder="اسم المستخدم (Username)">
-        <input type="tel" id="phone" placeholder="+249XXXXXXXXX">
+        <h2 style="color:var(--primary)">البحير نت</h2>
+        <p>أدخل بياناتك للانضمام إلينا</p>
+        <input type="text" id="username" placeholder="اختر اسم مستخدم">
+        <input type="tel" id="phone" placeholder="رقم الهاتف (+249...)">
         <div id="recaptcha-container"></div>
-        <button class="btn btn-wa" onclick="sendOTP()"><i class="fab fa-whatsapp"></i> دخول برقم الواتساب</button>
+        <button class="btn" onclick="sendOTP()">دخول</button>
         
-        <div id="otp-area" style="display:none;">
-            <input type="text" id="otp" placeholder="أدخل كود التحقق">
-            <button class="btn btn-main" onclick="verifyOTP()">تأكيد</button>
+        <div id="otp-area" style="display:none; margin-top: 15px;">
+            <input type="text" id="otp" placeholder="كود التحقق">
+            <button class="btn" onclick="verifyOTP()" style="background:#333;">تأكيد الكود</button>
         </div>
     </div>
 
     <div id="profile-setup" class="card">
-        <h3>أكمل ملفك الشخصي</h3>
+        <h3>أكمل بياناتك الشخصية</h3>
         <input type="number" id="user-age" placeholder="العمر">
         <select id="user-city">
-            <option value="">اختر المدينة...</option>
-            <optgroup label="السودان">
-                <option value="الخرطوم">الخرطوم</option>
-                <option value="نيالا">نيالا</option>
-                <option value="بورتسودان">بورتسودان</option>
-            </optgroup>
-            <optgroup label="دول أخرى">
-                <option value="القاهرة">القاهرة</option>
-                <option value="الرياض">الرياض</option>
-                <option value="دبي">دبي</option>
-            </optgroup>
+            <option value="">اختر مدينتك...</option>
+            <option value="الخرطوم">الخرطوم</option>
+            <option value="نيالا">نيالا</option>
+            <option value="بورتسودان">بورتسودان</option>
+            <option value="ود مدني">ود مدني</option>
+            <option value="أخرى">مدينة أخرى</option>
         </select>
         <select id="user-status">
             <option value="أعزب">أعزب</option>
             <option value="متزوج">متزوج</option>
             <option value="خاطب">خاطب</option>
         </select>
-        <button class="btn btn-main" onclick="saveProfile()">حفظ والذهاب للموقع</button>
+        <button class="btn" onclick="saveProfile()">حفظ البيانات والدخول</button>
     </div>
 
     <div id="main-app">
         <div class="card">
-            <textarea id="post-text" placeholder="ماذا يدور في ذهنك؟"></textarea>
+            <textarea id="post-text" placeholder="ماذا تريد أن تنشر اليوم؟"></textarea>
             <input type="file" id="post-img" accept="image/*">
-            <button class="btn btn-main" onclick="createPost()">نشر</button>
+            <button class="btn" onclick="createPost()">نشر الآن</button>
         </div>
         <div id="feed"></div>
     </div>
@@ -86,10 +75,10 @@
 <script>
     // إعدادات Firebase
     const firebaseConfig = {
-        apiKey: "AIzaSy...", 
-        authDomain: "albehir.firebaseapp.com",
-        projectId: "albehir",
-        storageBucket: "albehir.appspot.com",
+        apiKey: "ضع_مفتاحك_هنا",
+        authDomain: "albehir-net.firebaseapp.com",
+        projectId: "albehir-net",
+        storageBucket: "albehir-net.appspot.com",
         messagingSenderId: "...",
         appId: "..."
     };
@@ -99,16 +88,18 @@
     const db = firebase.firestore();
     const storage = firebase.storage();
 
-    // إعداد ReCaptcha
     window.recaptchaVerifier = new firebase.auth.RecaptchaVerifier('recaptcha-container', { 'size': 'invisible' });
 
-    // الدخول
     function sendOTP() {
         const phone = document.getElementById('phone').value;
+        const user = document.getElementById('username').value;
+        if(!user) return alert("يرجى كتابة اسم المستخدم أولاً");
+        
         auth.signInWithPhoneNumber(phone, window.recaptchaVerifier).then(result => {
             window.confirmationResult = result;
             document.getElementById('otp-area').style.display = 'block';
-        });
+            alert("تم إرسال كود التحقق لهاتفك");
+        }).catch(err => alert("خطأ: " + err.message));
     }
 
     function verifyOTP() {
@@ -116,11 +107,10 @@
         confirmationResult.confirm(code).then(res => checkUser(res.user));
     }
 
-    // التحقق من المستخدم والبيانات
     async function checkUser(user) {
         const doc = await db.collection("users").doc(user.uid).get();
         if (doc.exists) {
-            updateLastSeen();
+            updateActivity();
             showMain();
         } else {
             document.getElementById('auth-screen').style.display = 'none';
@@ -128,7 +118,6 @@
         }
     }
 
-    // حفظ الملف الشخصي
     async function saveProfile() {
         const user = auth.currentUser;
         const data = {
@@ -142,8 +131,7 @@
         showMain();
     }
 
-    // تحديث آخر ظهور
-    function updateLastSeen() {
+    function updateActivity() {
         if (auth.currentUser) {
             db.collection("users").doc(auth.currentUser.uid).update({
                 lastSeen: firebase.firestore.FieldValue.serverTimestamp()
@@ -158,7 +146,6 @@
         loadPosts();
     }
 
-    // نظام المنشورات مع عرض البيانات الجديدة
     async function createPost() {
         const text = document.getElementById('post-text').value;
         const file = document.getElementById('post-img').files[0];
@@ -173,12 +160,13 @@
         }
 
         await db.collection("posts").add({
-            text, url, 
+            text, url,
             username: userData.username,
             city: userData.city,
             time: firebase.firestore.FieldValue.serverTimestamp()
         });
         document.getElementById('post-text').value = "";
+        document.getElementById('post-img').value = "";
     }
 
     function loadPosts() {
@@ -187,22 +175,20 @@
             feed.innerHTML = "";
             snap.forEach(doc => {
                 const p = doc.data();
-                const postDate = p.time ? new Date(p.time.seconds*1000).toLocaleString('ar-EG') : 'الآن';
+                const timeStr = p.time ? new Date(p.time.seconds*1000).toLocaleString('ar-EG') : 'الآن';
                 feed.innerHTML += `
-                    <div class="post card">
-                        <div class="user-info">
-                            <strong>${p.username}</strong> من ${p.city} <br>
-                            <span class="status-online">نُشر في: ${postDate}</span>
+                    <div class="post">
+                        <div class="user-meta">
+                            <strong>${p.username}</strong> | ${p.city} | ${timeStr}
                         </div>
                         <p>${p.text}</p>
-                        ${p.url ? `<img src="${p.url}" style="width:100%; border-radius:10px;">` : ""}
+                        ${p.url ? `<img src="${p.url}" style="width:100%; border-radius:8px;">` : ""}
                     </div>`;
             });
         });
     }
 
-    // تحديث التواجد كل دقيقة
-    setInterval(updateLastSeen, 60000);
+    setInterval(updateActivity, 60000);
 </script>
 
 </body>
