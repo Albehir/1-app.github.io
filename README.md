@@ -3,208 +3,196 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>شبكة البحير الاجتماعية - توثيق الهوية</title>
+    <title>البحير نت - التواصل الاجتماعي</title>
     
-    <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-storage-compat.js"></script>
 
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/css/intlTelInput.css"/>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/js/intlTelInput.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 
     <style>
-        :root { --primary: #0055d4; --bg: #f0f2f5; --white: #fff; }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; padding: 0; }
+        :root {
+            --primary-color: #1da1f2;
+            --whatsapp-color: #25D366;
+            --bg-color: #f5f8fa;
+        }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: var(--bg-color); margin: 0; padding: 0; }
+        .container { max-width: 600px; margin: auto; padding: 15px; }
         
-        #auth-screen { display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px; box-sizing: border-box; }
-        .auth-card { background: var(--white); padding: 30px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); text-align: center; width: 100%; max-width: 400px; }
-        .auth-card input { width: 100%; padding: 12px; margin-bottom: 15px; border-radius: 8px; border: 1px solid #ddd; box-sizing: border-box; font-size: 1rem; }
+        /* شاشة تسجيل الدخول */
+        #auth-container { background: white; padding: 25px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); margin-top: 30px; text-align: center; }
+        .logo { font-size: 28px; font-weight: bold; color: var(--primary-color); margin-bottom: 20px; }
         
-        .iti { width: 100%; margin-bottom: 15px; }
+        input { width: 100%; padding: 14px; margin: 10px 0; border: 1.5px solid #eee; border-radius: 12px; box-sizing: border-box; outline: none; transition: 0.3s; }
+        input:focus { border-color: var(--primary-color); }
+        
+        .btn { width: 100%; padding: 14px; border: none; border-radius: 12px; cursor: pointer; font-size: 16px; font-weight: bold; transition: 0.3s; margin-bottom: 10px; }
+        .btn-primary { background: var(--primary-color); color: white; }
+        .btn-whatsapp { background: var(--whatsapp-color); color: white; display: flex; align-items: center; justify-content: center; gap: 10px; }
+        .btn-whatsapp:hover { opacity: 0.9; }
+
+        /* شاشة التطبيق */
         #main-app { display: none; }
-        header { background: var(--primary); color: white; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 1000; }
+        .nav { background: white; padding: 15px; position: sticky; top: 0; z-index: 100; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; }
         
-        .container { max-width: 500px; margin: 20px auto; padding: 10px; }
-        .post-box { background: white; padding: 15px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-        textarea { width: 100%; height: 70px; border: 1px solid #ddd; border-radius: 8px; padding: 10px; resize: none; width: 100%; box-sizing: border-box; }
+        #post-form { background: white; padding: 15px; border-radius: 15px; margin-bottom: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+        textarea { width: 100%; height: 100px; border: none; padding: 10px; resize: none; font-size: 16px; box-sizing: border-box; outline: none; }
         
-        .btn-post { background: var(--primary); color: white; border: none; padding: 12px; border-radius: 8px; cursor: pointer; width: 100%; font-weight: bold; margin-top: 5px; }
-        .post { background: white; padding: 15px; border-radius: 12px; margin-bottom: 15px; border: 1px solid #e0e0e0; }
-        .username { font-weight: bold; color: var(--primary); }
+        .post-card { background: white; padding: 15px; border-radius: 15px; margin-bottom: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+        .post-header { font-weight: bold; color: #333; margin-bottom: 8px; font-size: 14px; }
+        .post-img { width: 100%; border-radius: 12px; margin-top: 10px; max-height: 400px; object-fit: cover; }
+        
         #recaptcha-container { margin: 10px 0; }
     </style>
 </head>
 <body>
 
-    <div id="auth-screen">
-        <div class="auth-card">
-            <h2 style="color: var(--primary);">البحير نت</h2>
+    <div class="container">
+        <div id="auth-container">
+            <div class="logo">البحير نت</div>
+            <p style="color: #666;">سجل دخولك للتواصل مع الأصدقاء</p>
             
-            <div id="step-1">
-                <p>سجل عبر البريد أو الهاتف</p>
-                <input type="email" id="email-input" placeholder="البريد الإلكتروني">
-                <p style="margin: 5px 0;">أو</p>
-                <input type="tel" id="phone-input" placeholder="اكتب رقمك">
+            <div id="login-fields">
+                <input type="tel" id="phone" placeholder="+249XXXXXXXXX">
                 <div id="recaptcha-container"></div>
-                <button onclick="handleAuth()" class="btn-post">إرسال رمز التحقق</button>
-            </div>
+                <button id="send-code-btn" class="btn btn-whatsapp" onclick="sendOTP()">
+                    <i class="fab fa-whatsapp"></i> تسجيل برقم الواتساب
+                </button>
+                
+                <div id="otp-section" style="display:none; border-top: 1px solid #eee; padding-top: 10px;">
+                    <p style="font-size: 13px; color: #888;">أدخل الكود المكون من 6 أرقام</p>
+                    <input type="text" id="otp" placeholder="000000">
+                    <button class="btn btn-primary" onclick="verifyOTP()">تأكيد الكود</button>
+                </div>
 
-            <div id="step-2" style="display: none;">
-                <p>أدخل الكود المرسل لهاتفك</p>
-                <input type="number" id="verification-code" placeholder="000000">
-                <button onclick="verifySmsCode()" class="btn-post">تأكيد الدخول</button>
+                <div style="margin: 20px 0; color: #ccc;">أو</div>
+
+                <input type="email" id="email" placeholder="البريد الإلكتروني">
+                <button class="btn btn-primary" style="background: #555;" onclick="loginWithEmail()">دخول عبر رابط البريد</button>
             </div>
         </div>
-    </div>
 
-    <div id="main-app">
-        <header>
-            <div><strong>شبكة البحير الاجتماعية</strong></div>
-            <div id="user-info"></div>
-        </header>
-        <div class="container">
-            <div class="post-box">
-                <textarea id="post-text" placeholder="ماذا يدور في ذهنك؟"></textarea>
-                <button onclick="sendPost()" class="btn-post">نشر المنشور 🚀</button>
+        <div id="main-app">
+            <div class="nav">
+                <div style="font-weight: bold; font-size: 20px; color: var(--primary-color);">البحير نت</div>
+                <button onclick="logout()" style="background:none; border:1px solid #ff4d4d; color:#ff4d4d; padding:5px 12px; border-radius:8px; cursor:pointer;">خروج</button>
             </div>
-            <div id="posts-container"></div>
+
+            <div id="post-form">
+                <textarea id="post-text" placeholder="اكتب شيئاً للدنيا..."></textarea>
+                <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #eee; padding-top: 10px;">
+                    <input type="file" id="post-image" accept="image/*" style="width: auto; border: none; padding: 0;">
+                    <button class="btn btn-primary" style="width: 100px; margin: 0;" onclick="uploadPost()">نشر</button>
+                </div>
+            </div>
+
+            <div id="posts-container">
+                </div>
         </div>
     </div>
 
     <script>
-        // --- 1. إعدادات Firebase (تم إصلاح التداخل هنا) ---
+        // تكوين Firebase (ضع بياناتك هنا)
         const firebaseConfig = {
-            apiKey: "AIzaSyAHbXMLT3F0OpnMZQHHPz-kAOlZBi1hhs4",
-            authDomain: "albehirsocial.firebaseapp.com",
-            databaseURL: "https://albehirsocial-default-rtdb.firebaseio.com",
-            projectId: "albehirsocial",
-            storageBucket: "albehirsocial.firebasestorage.app",
-            messagingSenderId: "302307189713",
-            appId: "1:302307189713:web:abc71f50c9f87113c0f6f0",
-            measurementId: "G-0Y1D7BFD37"
+            apiKey: "ضع_مفتاحك_هنا",
+            authDomain: "albehir-net.firebaseapp.com",
+            projectId: "albehir-net",
+            storageBucket: "albehir-net.appspot.com",
+            messagingSenderId: "...",
+            appId: "..."
         };
 
-        // تهيئة Firebase مرة واحدة فقط
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
-        const database = firebase.database();
+        const db = firebase.firestore();
+        const storage = firebase.storage();
 
-        // --- 2. تهيئة مكتبة الهاتف ---
-        const phoneInputField = document.querySelector("#phone-input");
-        const phoneInput = window.intlTelInput(phoneInputField, {
-            utilsScript: "https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/js/utils.js",
-        });
+        // إعداد المحقق المرئي
+        window.recaptchaVerifier = new firebase.auth.RecaptchaVerifier('recaptcha-container', { 'size': 'invisible' });
 
-        // تهيئة ReCaptcha
-        window.recaptchaVerifier = new firebase.auth.RecaptchaVerifier('recaptcha-container', {
-            'size': 'invisible'
-        });
-
-        let confirmationResult = null;
-        let currentUserLabel = "";
-
-        // --- 3. وظائف التسجيل ---
-        async function handleAuth() {
-            const email = document.getElementById('email-input').value.trim();
-            const phone = phoneInput.getNumber();
-
-            try {
-                if (email) {
-                    const actionCodeSettings = {
-                        url: window.location.href,
-                        handleCodeInApp: true
-                    };
-                    await auth.sendSignInLinkToEmail(email, actionCodeSettings);
-                    window.localStorage.setItem('emailForSignIn', email);
-                    alert("تم إرسال رابط التحقق إلى بريدك الإلكتروني! افحص صندوق الوارد.");
-                } 
-                else if (phoneInput.isValidNumber()) {
-                    const appVerifier = window.recaptchaVerifier;
-                    confirmationResult = await auth.signInWithPhoneNumber(phone, appVerifier);
-                    document.getElementById('step-1').style.display = 'none';
-                    document.getElementById('step-2').style.display = 'block';
-                    alert("تم إرسال كود الـ SMS بنجاح");
-                } 
-                else {
-                    alert("يرجى إدخال إيميل صحيح أو رقم هاتف كامل مع مفتاح الدولة");
-                }
-            } catch (error) {
-                alert("خطأ في Firebase: " + error.message);
-                console.error(error);
-            }
-        }
-
-        async function verifySmsCode() {
-            const code = document.getElementById('verification-code').value;
-            try {
-                const result = await confirmationResult.confirm(code);
-                completeLogin(result.user);
-            } catch (error) {
-                alert("الكود الذي أدخلته غير صحيح!");
-            }
-        }
-
-        // معالجة العودة من رابط الإيميل
-        if (auth.isSignInWithEmailLink(window.location.href)) {
-            let email = window.localStorage.getItem('emailForSignIn');
-            if (!email) email = window.prompt('يرجى تأكيد بريدك الإلكتروني لإتمام الدخول:');
-            auth.signInWithEmailLink(email, window.location.href)
-                .then((result) => {
-                    window.localStorage.removeItem('emailForSignIn');
-                    completeLogin(result.user);
-                })
-                .catch((error) => alert("خطأ في رابط التحقق: " + error.message));
-        }
-
-        function completeLogin(user) {
-            currentUserLabel = user.email || user.phoneNumber;
-            document.getElementById('auth-screen').style.display = 'none';
-            document.getElementById('main-app').style.display = 'block';
-            document.getElementById('user-info').innerHTML = `👤 ${currentUserLabel}`;
+        // وظائف تسجيل الدخول
+        function sendOTP() {
+            const phoneNumber = document.getElementById('phone').value;
+            if(!phoneNumber.startsWith('+')) return alert("يرجى كتابة الرقم بالصيغة الدولية مثل +249");
             
-            database.ref('users/' + user.uid).update({
-                identity: currentUserLabel,
-                lastSeen: Date.now()
-            });
-            listenForPosts();
+            auth.signInWithPhoneNumber(phoneNumber, window.recaptchaVerifier)
+                .then(confirmationResult => {
+                    window.confirmationResult = confirmationResult;
+                    document.getElementById('otp-section').style.display = 'block';
+                    document.getElementById('send-code-btn').style.display = 'none';
+                }).catch(error => alert("خطأ: " + error.message));
         }
 
-        function sendPost() {
+        function verifyOTP() {
+            const code = document.getElementById('otp').value;
+            confirmationResult.confirm(code).then(() => {
+                // سيتم التحديث تلقائياً عبر onAuthStateChanged
+            }).catch(() => alert("الكود غير صحيح"));
+        }
+
+        function loginWithEmail() {
+            const email = document.getElementById('email').value;
+            auth.sendSignInLinkToEmail(email, { url: 'https://albehir.github.io', handleCodeInApp: true })
+                .then(() => {
+                    localStorage.setItem('emailForSignIn', email);
+                    alert('افحص بريدك الآن، أرسلنا لك رابط الدخول!');
+                }).catch(error => alert(error.message));
+        }
+
+        // مراقبة الجلسة
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                document.getElementById('auth-container').style.display = 'none';
+                document.getElementById('main-app').style.display = 'block';
+                loadPosts();
+            } else {
+                document.getElementById('auth-container').style.display = 'block';
+                document.getElementById('main-app').style.display = 'none';
+            }
+        });
+
+        // نظام المنشورات
+        async function uploadPost() {
             const text = document.getElementById('post-text').value;
-            if (text.trim() === "") return;
-            database.ref('posts').push({
-                username: currentUserLabel,
-                content: text,
-                timestamp: Date.now(),
-                likes: 0
+            const file = document.getElementById('post-image').files[0];
+            if (!text && !file) return;
+
+            let imageUrl = "";
+            if (file) {
+                const ref = storage.ref(`posts/${Date.now()}_${file.name}`);
+                await ref.put(file);
+                imageUrl = await ref.getDownloadURL();
+            }
+
+            await db.collection("posts").add({
+                text: text,
+                image: imageUrl,
+                user: auth.currentUser.phoneNumber || auth.currentUser.email,
+                time: firebase.firestore.FieldValue.serverTimestamp()
             });
             document.getElementById('post-text').value = "";
+            document.getElementById('post-image').value = "";
         }
 
-        function listenForPosts() {
-            database.ref('posts').on('value', (snapshot) => {
+        function loadPosts() {
+            db.collection("posts").orderBy("time", "desc").onSnapshot(snap => {
                 const container = document.getElementById('posts-container');
                 container.innerHTML = "";
-                const data = snapshot.val();
-                if (data) {
-                    Object.keys(data).reverse().forEach(key => {
-                        const post = data[key];
-                        container.innerHTML += `
-                            <div class="post">
-                                <span class="username">${post.username} <span style="color:#28a745; font-size:0.7rem;">● نشط</span></span>
-                                <div class="post-content">${post.content}</div>
-                                <div class="actions" style="margin-top:10px; border-top:1px solid #eee; padding-top:5px;">
-                                    <button style="background:none; border:none; color:var(--primary); cursor:pointer;" onclick="addLike('${key}', ${post.likes || 0})">❤️ تفاعل (${post.likes || 0})</button>
-                                </div>
-                            </div>`;
-                    });
-                }
+                snap.forEach(doc => {
+                    const p = doc.data();
+                    container.innerHTML += `
+                        <div class="post-card">
+                            <div class="post-header"><i class="fa-regular fa-user"></i> ${p.user}</div>
+                            <div>${p.text}</div>
+                            ${p.image ? `<img src="${p.image}" class="post-img">` : ""}
+                        </div>`;
+                });
             });
         }
 
-        function addLike(postId, currentLikes) {
-            database.ref('posts/' + postId).update({ likes: currentLikes + 1 });
-        }
+        function logout() { auth.signOut(); }
     </script>
 </body>
 </html>
