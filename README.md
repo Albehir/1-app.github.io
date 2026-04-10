@@ -16,7 +16,8 @@
         .container { max-width: 500px; margin: auto; padding: 15px; }
         .card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); margin-bottom: 20px; text-align: center; }
         input, select, textarea { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 10px; box-sizing: border-box; font-size: 16px; outline: none; }
-        .btn { width: 100%; padding: 12px; border: none; border-radius: 10px; cursor: pointer; font-weight: bold; background: var(--primary); color: white; font-size: 16px; }
+        .btn { width: 100%; padding: 12px; border: none; border-radius: 10px; cursor: pointer; font-weight: bold; background: var(--primary); color: white; font-size: 16px; transition: 0.3s; }
+        .btn:hover { background: #1991db; }
         #auth-screen, #profile-setup, #main-app { display: none; }
         .post { background: white; padding: 15px; border-radius: 12px; margin-bottom: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); text-align: right; }
         .user-meta { font-size: 12px; color: #65676b; margin-bottom: 8px; border-bottom: 1px solid #eee; padding-bottom: 5px; }
@@ -62,9 +63,11 @@
 </div>
 
 <script>
+    // تم تحديث هذه القيم بناءً على طلبك
     const firebaseConfig = {
         apiKey: "AIzaSyAHbXMLT3F0OpnMZQHHPz-kAOlZBi1hhs4",
         authDomain: "albehirsocial.firebaseapp.com",
+        databaseURL: "https://albehirsocial-default-rtdb.firebaseio.com",
         projectId: "albehirsocial",
         storageBucket: "albehirsocial.firebasestorage.app",
         messagingSenderId: "302307189713",
@@ -82,7 +85,7 @@
 
         if(!user || !pass) return alert("يرجى ملء الحقول");
 
-        // Firebase يتطلب تقنياً 6 خانات، لذا سأضيف أصفاراً تلقائية إذا كتب المستخدم أقل من 6 لتسهيل الأمر عليه
+        // خدعة برمجية لتخطي شرط الـ 6 خانات
         if(pass.length < 6) pass = pass.padEnd(6, "0"); 
 
         const fakeEmail = user + "@albehir.net";
@@ -90,7 +93,6 @@
         auth.signInWithEmailAndPassword(fakeEmail, pass)
             .catch(error => {
                 if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
-                    // إذا لم يجد الحساب، ينشئه فوراً
                     auth.createUserWithEmailAndPassword(fakeEmail, pass).catch(e => alert("خطأ: " + e.message));
                 }
             });
@@ -122,21 +124,24 @@
         const file = document.getElementById('post-img').files[0];
         if(!text && !file) return;
 
-        const userData = (await db.collection("users").doc(auth.currentUser.uid).get()).data();
-        let url = "";
-        if(file) {
-            const ref = storage.ref(`posts/${Date.now()}`);
-            await ref.put(file);
-            url = await ref.getDownloadURL();
-        }
+        try {
+            const userData = (await db.collection("users").doc(auth.currentUser.uid).get()).data();
+            let url = "";
+            if(file) {
+                const ref = storage.ref(`posts/${Date.now()}`);
+                await ref.put(file);
+                url = await ref.getDownloadURL();
+            }
 
-        await db.collection("posts").add({
-            text, url,
-            username: userData.username,
-            city: userData.city,
-            time: firebase.firestore.FieldValue.serverTimestamp()
-        });
-        document.getElementById('post-text').value = "";
+            await db.collection("posts").add({
+                text, url,
+                username: userData.username,
+                city: userData.city,
+                time: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            document.getElementById('post-text').value = "";
+            document.getElementById('post-img').value = "";
+        } catch (e) { alert("تأكد من تفعيل Firestore و Storage في Firebase"); }
     }
 
     function loadPosts() {
