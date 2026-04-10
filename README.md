@@ -75,7 +75,15 @@
 <script>
     // إعدادات Firebase
     const firebaseConfig = {
-        apiKey: "ضع_مفتاحك_هنا",
+        apiKey: " 
+  apiKey: "AIzaSyAHbXMLT3F0OpnMZQHHPz-kAOlZBi1hhs4",
+  authDomain: "albehirsocial.firebaseapp.com",
+  databaseURL: "https://albehirsocial-default-rtdb.firebaseio.com",
+  projectId: "albehirsocial",
+  storageBucket: "albehirsocial.firebasestorage.app",
+  messagingSenderId: "302307189713",
+  appId: "1:302307189713:web:abc71f50c9f87113c0f6f0",
+  measurementId: "G-0Y1D7BFD37" ",
         authDomain: "albehir-net.firebaseapp.com",
         projectId: "albehir-net",
         storageBucket: "albehir-net.appspot.com",
