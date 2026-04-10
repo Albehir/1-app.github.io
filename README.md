@@ -72,31 +72,30 @@
     </div>
 
     <script>
+        // --- 1. إعدادات Firebase (تم إصلاح التداخل هنا) ---
         const firebaseConfig = {
-apiKey: "AIzaSyAHbXMLT3F0OpnMZQHHPz-kAOlZBi1hhs4",
-  authDomain: "albehirsocial.firebaseapp.com",
-  databaseURL: "https://albehirsocial-default-rtdb.firebaseio.com",
-  projectId: "albehirsocial",
-  storageBucket: "albehirsocial.firebasestorage.app",
-  messagingSenderId: "302307189713",
-  appId: "1:302307189713:web:abc71f50c9f87113c0f6f0",
-  measurementId: "G-0Y1D7BFD37"
-};
-
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-const analytics = getAnalytics(app);
+            apiKey: "AIzaSyAHbXMLT3F0OpnMZQHHPz-kAOlZBi1hhs4",
+            authDomain: "albehirsocial.firebaseapp.com",
+            databaseURL: "https://albehirsocial-default-rtdb.firebaseio.com",
+            projectId: "albehirsocial",
+            storageBucket: "albehirsocial.firebasestorage.app",
+            messagingSenderId: "302307189713",
+            appId: "1:302307189713:web:abc71f50c9f87113c0f6f0",
+            measurementId: "G-0Y1D7BFD37"
         };
 
+        // تهيئة Firebase مرة واحدة فقط
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
         const database = firebase.database();
 
+        // --- 2. تهيئة مكتبة الهاتف ---
         const phoneInputField = document.querySelector("#phone-input");
         const phoneInput = window.intlTelInput(phoneInputField, {
             utilsScript: "https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/js/utils.js",
         });
 
+        // تهيئة ReCaptcha
         window.recaptchaVerifier = new firebase.auth.RecaptchaVerifier('recaptcha-container', {
             'size': 'invisible'
         });
@@ -104,6 +103,7 @@ const analytics = getAnalytics(app);
         let confirmationResult = null;
         let currentUserLabel = "";
 
+        // --- 3. وظائف التسجيل ---
         async function handleAuth() {
             const email = document.getElementById('email-input').value.trim();
             const phone = phoneInput.getNumber();
@@ -116,20 +116,20 @@ const analytics = getAnalytics(app);
                     };
                     await auth.sendSignInLinkToEmail(email, actionCodeSettings);
                     window.localStorage.setItem('emailForSignIn', email);
-                    alert("تم إرسال رابط التحقق إلى بريدك الإلكتروني!");
+                    alert("تم إرسال رابط التحقق إلى بريدك الإلكتروني! افحص صندوق الوارد.");
                 } 
                 else if (phoneInput.isValidNumber()) {
                     const appVerifier = window.recaptchaVerifier;
                     confirmationResult = await auth.signInWithPhoneNumber(phone, appVerifier);
                     document.getElementById('step-1').style.display = 'none';
                     document.getElementById('step-2').style.display = 'block';
-                    alert("تم إرسال كود الـ SMS");
+                    alert("تم إرسال كود الـ SMS بنجاح");
                 } 
                 else {
-                    alert("يرجى إدخال إيميل صحيح أو رقم هاتف كامل");
+                    alert("يرجى إدخال إيميل صحيح أو رقم هاتف كامل مع مفتاح الدولة");
                 }
             } catch (error) {
-                alert("خطأ: " + error.message);
+                alert("خطأ في Firebase: " + error.message);
                 console.error(error);
             }
         }
@@ -140,19 +140,20 @@ const analytics = getAnalytics(app);
                 const result = await confirmationResult.confirm(code);
                 completeLogin(result.user);
             } catch (error) {
-                alert("الكود غير صحيح!");
+                alert("الكود الذي أدخلته غير صحيح!");
             }
         }
 
+        // معالجة العودة من رابط الإيميل
         if (auth.isSignInWithEmailLink(window.location.href)) {
             let email = window.localStorage.getItem('emailForSignIn');
-            if (!email) email = window.prompt('يرجى تأكيد بريدك الإلكتروني:');
+            if (!email) email = window.prompt('يرجى تأكيد بريدك الإلكتروني لإتمام الدخول:');
             auth.signInWithEmailLink(email, window.location.href)
                 .then((result) => {
                     window.localStorage.removeItem('emailForSignIn');
                     completeLogin(result.user);
                 })
-                .catch((error) => alert("خطأ في التحقق: " + error.message));
+                .catch((error) => alert("خطأ في رابط التحقق: " + error.message));
         }
 
         function completeLogin(user) {
