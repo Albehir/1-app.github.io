@@ -15,7 +15,7 @@
         body { font-family: 'Segoe UI', sans-serif; background-color: var(--bg); margin: 0; padding: 0; }
         .container { max-width: 500px; margin: auto; padding: 15px; }
         .card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); margin-bottom: 20px; text-align: center; }
-        input, select, textarea { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 10px; box-sizing: border-box; font-size: 16px; }
+        input, select, textarea { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 10px; box-sizing: border-box; font-size: 16px; outline: none; }
         .btn { width: 100%; padding: 12px; border: none; border-radius: 10px; cursor: pointer; font-weight: bold; background: var(--primary); color: white; font-size: 16px; }
         #auth-screen, #profile-setup, #main-app { display: none; }
         .post { background: white; padding: 15px; border-radius: 12px; margin-bottom: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); text-align: right; }
@@ -27,23 +27,22 @@
 
 <div class="container">
     <div id="auth-screen" class="card" style="display: block;">
-        <h2 style="color:var(--primary); margin-top:0;">البحير نت</h2>
-        <p>سجل دخولك باسم المستخدم</p>
-        <input type="text" id="login-username" placeholder="اسم المستخدم (مثال: mahmoud24)">
-        <input type="password" id="login-password" placeholder="كلمة المرور">
-        <button class="btn" onclick="handleAuth()">دخول / تسجيل جديد</button>
-        <p style="font-size: 12px; color: #888; margin-top: 10px;">ملاحظة: إذا كنت جديداً، سيتم إنشاء حسابك تلقائياً بهذا الاسم.</p>
+        <h2 style="color:var(--primary); margin:0 0 10px 0;">البحير نت</h2>
+        <p>ادخل أي اسم مستخدم وأي كلمة سر</p>
+        <input type="text" id="login-username" placeholder="اسم المستخدم">
+        <input type="text" id="login-password" placeholder="كلمة المرور (أي شيء)">
+        <button class="btn" onclick="handleAuth()">دخول / تسجيل</button>
     </div>
 
     <div id="profile-setup" class="card">
-        <h3>أهلاً بك! أكمل بياناتك</h3>
+        <h3>بياناتك الشخصية</h3>
         <input type="number" id="user-age" placeholder="العمر">
         <select id="user-city">
             <option value="">اختر مدينتك...</option>
             <option value="الخرطوم">الخرطوم</option>
             <option value="نيالا">نيالا</option>
             <option value="بورتسودان">بورتسودان</option>
-            <option value="ود مدني">ود مدني</option>
+            <option value="أخرى">مدينة أخرى</option>
         </select>
         <select id="user-status">
             <option value="أعزب">أعزب</option>
@@ -54,16 +53,15 @@
 
     <div id="main-app">
         <div class="card">
-            <textarea id="post-text" placeholder="بماذا تفكر يا صديقي؟"></textarea>
+            <textarea id="post-text" placeholder="ماذا يدور في ذهنك؟"></textarea>
             <input type="file" id="post-img" accept="image/*">
-            <button class="btn" onclick="createPost()">نشر الآن</button>
+            <button class="btn" onclick="createPost()">نشر</button>
         </div>
         <div id="feed"></div>
     </div>
 </div>
 
 <script>
-    // إعدادات مشروعك albehirsocial
     const firebaseConfig = {
         apiKey: "AIzaSyAHbXMLT3F0OpnMZQHHPz-kAOlZBi1hhs4",
         authDomain: "albehirsocial.firebaseapp.com",
@@ -78,54 +76,44 @@
     const db = firebase.firestore();
     const storage = firebase.storage();
 
-    // وظيفة الدخول (تحويل اسم المستخدم لإيميل وهمي داخلياً ليعمل Firebase)
     function handleAuth() {
         const user = document.getElementById('login-username').value.trim();
-        const pass = document.getElementById('login-password').value;
+        let pass = document.getElementById('login-password').value;
 
-        if(user.length < 3 || pass.length < 6) {
-            return alert("الاسم يجب أن يكون 3 حروف والرمز 6 أرقام على الأقل");
-        }
+        if(!user || !pass) return alert("يرجى ملء الحقول");
 
-        const fakeEmail = user + "@albehir.net"; // تحويل الاسم لإيميل ليقبله النظام
+        // Firebase يتطلب تقنياً 6 خانات، لذا سأضيف أصفاراً تلقائية إذا كتب المستخدم أقل من 6 لتسهيل الأمر عليه
+        if(pass.length < 6) pass = pass.padEnd(6, "0"); 
+
+        const fakeEmail = user + "@albehir.net";
 
         auth.signInWithEmailAndPassword(fakeEmail, pass)
-            .then(() => { /* سيتم التحويل عبر مراقب الحالة */ })
             .catch(error => {
-                if (error.code === 'auth/user-not-found') {
-                    auth.createUserWithEmailAndPassword(fakeEmail, pass).catch(e => alert(e.message));
-                } else {
-                    alert("خطأ في الدخول: تأكد من كلمة المرور");
+                if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
+                    // إذا لم يجد الحساب، ينشئه فوراً
+                    auth.createUserWithEmailAndPassword(fakeEmail, pass).catch(e => alert("خطأ: " + e.message));
                 }
             });
     }
 
-    // مراقب حالة المستخدم
     auth.onAuthStateChanged(async (user) => {
         if (user) {
             const doc = await db.collection("users").doc(user.uid).get();
-            if (doc.exists) {
-                showScreen('main-app');
-                loadPosts();
-            } else {
-                showScreen('profile-setup');
-            }
-        } else {
-            showScreen('auth-screen');
-        }
+            if (doc.exists) { showScreen('main-app'); loadPosts(); } 
+            else { showScreen('profile-setup'); }
+        } else { showScreen('auth-screen'); }
     });
 
     async function saveProfile() {
         const user = auth.currentUser;
         const username = document.getElementById('login-username').value;
-        const data = {
+        await db.collection("users").doc(user.uid).set({
             username: username,
             age: document.getElementById('user-age').value,
             city: document.getElementById('user-city').value,
             status: document.getElementById('user-status').value,
             lastSeen: firebase.firestore.FieldValue.serverTimestamp()
-        };
-        await db.collection("users").doc(user.uid).set(data);
+        });
         showScreen('main-app');
     }
 
@@ -136,7 +124,6 @@
 
         const userData = (await db.collection("users").doc(auth.currentUser.uid).get()).data();
         let url = "";
-
         if(file) {
             const ref = storage.ref(`posts/${Date.now()}`);
             await ref.put(file);
@@ -150,7 +137,6 @@
             time: firebase.firestore.FieldValue.serverTimestamp()
         });
         document.getElementById('post-text').value = "";
-        document.getElementById('post-img').value = "";
     }
 
     function loadPosts() {
